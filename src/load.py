@@ -13,6 +13,7 @@ def load_to_sqlite(spark_df):
 
     conn = sqlite3.connect(DB_PATH)
 
+    # todo: option to incrementally load data instead of replacing the table
     pandas_df.to_sql(
         TABLE_NAME,
         conn,
