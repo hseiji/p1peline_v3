@@ -9,11 +9,12 @@ def load_to_sqlite(spark_df):
 
     logging.info("Loading data into SQLite")
 
+    # ok for small datasets, for larger ones we would want to batch this or use a more efficient method
     pandas_df = spark_df.toPandas()
 
     conn = sqlite3.connect(DB_PATH)
 
-    # todo: option to incrementally load data instead of replacing the table
+    # todo: option to incrementally load data instead of replacing the table (will do this for next project with better API)
     pandas_df.to_sql(
         TABLE_NAME,
         conn,
