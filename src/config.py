@@ -1,7 +1,5 @@
-API_URL = (
-    "https://restcountries.com/v3.1/all"
-    "?fields=cca3,name,region,capital,population"
-)
+import os
+API_URL = os.getenv("API_URL")
 
 RAW_PATH = "data/raw/countries_raw.json"
 PARQUET_PATH = "data/processed/countries.parquet"

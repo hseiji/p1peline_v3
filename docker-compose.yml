@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    container_name: p1peline_v3_app
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    command: ["python", "main.py"]
