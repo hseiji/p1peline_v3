@@ -22,9 +22,9 @@ def main():
 
     parser.add_argument(
         "--output",
-        default="sqlite",
-        choices=["sqlite", "parquet"],
-        help="Output target: sqlite or parquet"
+        default="postgres",
+        choices=["postgres", "parquet"],
+        help="Output target: postgres or parquet"
     )
 
     args = parser.parse_args()

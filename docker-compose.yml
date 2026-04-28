@@ -1,5 +1,23 @@
 version: '3.8'
 services:
+  db:
+    image: postgres:15
+    container_name: pipeline_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+
   app:
     build: .
     container_name: p1peline_v3_app
@@ -8,3 +26,7 @@ services:
     volumes:
       - .:/app
     command: ["python", "main.py"]
+
+
+volumes:
+  postgres_data:
