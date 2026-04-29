@@ -1,8 +1,14 @@
-# Countries Data Pipeline
 
-A modular **data engineering pipeline** that ingests country data from a REST API, processes it using Spark, validates data quality, and stores it in both a **data lake (Parquet)** and a **SQLite warehouse**.
+# Countries Data Pipeline (with Spark & PostgreSQL)
 
----
+This project is a modular data engineering pipeline that:
+- Ingests country data from a REST API
+- Processes and cleans the data using Apache Spark
+- Validates data quality
+- Stores the results in either a PostgreSQL database or as Parquet files (data lake)
+
+It is fully containerized with Docker and orchestrated using Docker Compose for easy setup and reproducibility.
+
 
 # Pipeline Architecture
 ```text
@@ -20,25 +26,20 @@ Partitioned Parquet Data Lake
 ↓
 Analytics Aggregations
 ↓
-SQLite Warehouse
+PostgreSQL Warehouse
 ```
 
 ---
 
+
 # Project Structure
+
 ```text
-countries-data-pipeline/
-│
+p1peline_v3/
 ├── data/
 │   ├── raw/
-│   │   └── countries_raw.json
-│   │
 │   └── processed/
-│       ├── countries.parquet/
-│       └── region_population/
-│
 ├── src/
-│   ├── __init__.py
 │   ├── config.py
 │   ├── extract.py
 │   ├── transform_spark.py
@@ -46,9 +47,11 @@ countries-data-pipeline/
 │   ├── data_quality.py
 │   ├── spark_session.py
 │   └── pipeline.py
-│
 ├── main.py
 ├── requirements.txt
+├── .env
+├── Dockerfile
+├── docker-compose.yml
 └── README.md
 ```
 
@@ -56,70 +59,79 @@ countries-data-pipeline/
 
 # Features
 
-## Data Extraction
-- Fetches country data from REST API
-- Saves raw JSON data for reproducibility
-
-## Spark Transformations
-- Uses Apache Spark for scalable processing
-- Cleans and normalizes nested JSON
-- Handles missing/empty values safely (e.g., capital)
-
-## Data Quality Validation
-- Ensures:
-  - No empty datasets
-  - No null primary keys
-  - No invalid population values
-
-## Data Lake Storage
-- Writes **partitioned Parquet files** by region:
-
-
-
 data/processed/countries.parquet/
-region=Europe/
-region=Asia/
-region=Africa/
 
-## Analytics Layer
-- Aggregates population by region using Spark
-- Stores aggregated dataset separately
+## Features
 
-## Data Warehouse
-- Loads cleaned data into SQLite for querying
+- **Data Extraction:** Fetches country data from REST API and saves raw JSON for reproducibility.
+- **Spark Transformations:** Cleans and normalizes nested JSON, handles missing values, and aggregates population by region.
+- **Data Quality Validation:** Ensures no empty datasets, no null primary keys, and valid population values.
+- **Data Lake Storage:** Writes partitioned Parquet files by region to `data/processed/countries`.
+- **PostgreSQL Warehouse:** Loads cleaned data into a PostgreSQL database for analytics and querying.
+- **Modular Design:** Separate modules for extract, transform, load, and validation.
+- **CLI Support:** Choose output target (PostgreSQL or Parquet) via command-line argument.
 
-## Modular Design
-- Separate modules for extract, transform, load, validation
-- Easy to extend and maintain
-
-## CLI Support
-
-Run pipeline with different outputs:
-
-```bash
-python main.py --output sqlite
-```
-
-## How to Run
-
-### 1. Create virtual environment
-```bash
-python -m venv venv
-source venv/bin/activate   # Mac/Linux
-venv\Scripts\activate      # Windows
-```
-
-### 2. Install dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Run the pipeline
-```bash
-python main.py --output sqlite
-```
 or
 
-```bash
-python main.py --output parquet
+# Quickstart (with Docker Compose)
+
+1. Copy `.env.example` to `.env` and set your API and database credentials if needed.
+2. Build and start the pipeline and database:
+
+  ```bash
+  docker compose up --build
+  ```
+
+3. The pipeline will run and load data into PostgreSQL by default. To output Parquet files instead, edit the `command` in `docker-compose.yml`:
+
+  ```yaml
+  command: ["python", "main.py", "--output", "parquet"]
+  ```
+
+4. To stop and remove containers and volumes:
+
+  ```bash
+  docker compose down -v
+  ```
+
+# Running Locally (without Docker)
+
+1. Create a virtual environment and install dependencies:
+
+  ```bash
+  python -m venv venv
+  source venv/bin/activate
+  pip install -r requirements.txt
+  ```
+
+2. Set environment variables (or use a `.env` file with python-dotenv).
+
+3. Run the pipeline:
+
+  ```bash
+  python main.py --output postgres
+  # or
+  python main.py --output parquet
+  ```
+
+# Environment Variables
+
+Set these in your `.env` file:
+
 ```
+API_URL=https://restcountries.com/v3.1/all?fields=cca3,name,region,capital,population
+POSTGRES_USER=pipeline_user
+POSTGRES_PASSWORD=yourpassword
+POSTGRES_DB=pipeline_db
+POSTGRES_PORT=5432
+```
+
+# Requirements
+
+- Python 3.10+
+- Docker & Docker Compose (for containerized runs)
+- Spark, pandas, SQLAlchemy, psycopg2-binary
+
+# License
+
+MIT
