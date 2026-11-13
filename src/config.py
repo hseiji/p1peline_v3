@@ -1,6 +1,9 @@
 import os
 
-API_URL   = os.getenv("API_URL", "https://restcountries.com/v3.1/all")
+API_URL   = os.getenv("API_URL", "https://restcountries.com/v5/all")
+API_KEY   = os.getenv("REST_COUNTRIES_API_KEY")
+if not API_KEY:
+    raise ValueError("REST_COUNTRIES_API_KEY is not set in the environment variables.")
 RAW_PATH  = "data/raw/countries.json"
 PARQUET_PATH = "data/processed/countries"
 TABLE_NAME = "countries"
