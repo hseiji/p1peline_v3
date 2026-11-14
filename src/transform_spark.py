@@ -1,11 +1,6 @@
-from pathlib import Path
 from pyspark.sql.functions import (
     col, element_at, current_date, sum, count, size, when, explode, trim
 )
-from src.config import PARQUET_PATH
-
-BASE_DIR = Path(__file__).resolve().parent.parent  # p1peline_v3/
-REGION_POP_PATH = str(BASE_DIR / "data/processed/region_population")
 
 def transform_with_spark(spark, raw_path):
 
@@ -34,32 +29,13 @@ def transform_with_spark(spark, raw_path):
         col("country_code").isNotNull() & (trim(col("country_code")) != "")
     ).cache()  # Cache for performance if used multiple times
 
-    # Total count of countries
-    total = transformed_df.count()
-    print(f"Total countries: {total}")
-
     # -------------------------
-    # Write cleaned dataset
-    # -------------------------
-    transformed_df.write \
-        .mode("overwrite") \
-        .partitionBy("region") \
-        .parquet(PARQUET_PATH)
-
-    # -------------------------
-    # Aggregation example
+    # Aggregation - Region
     # -------------------------
     region_population = (
         transformed_df
         .groupBy("region")
         .agg(sum("population").alias("total_population"))
     )
-
-    print("\nPopulation by Region")
-    region_population.show()
-
-    region_population.write \
-        .mode("overwrite") \
-        .parquet(REGION_POP_PATH)
 
     return transformed_df, region_population

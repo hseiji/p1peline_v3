@@ -12,6 +12,8 @@ if not API_KEY:
 
 RAW_PATH = str(BASE_DIR / "data/raw/countries.json")
 PARQUET_PATH = str(BASE_DIR / "data/processed/countries")
+REGION_POP_PATH = str(BASE_DIR / "data/processed/region_population")
+
 TABLE_NAME = "countries"
 
 POSTGRES_URL = (
