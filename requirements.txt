@@ -4,3 +4,4 @@ pyspark==4.0.2
 pyarrow==21.0.0
 psycopg2-binary
 sqlalchemy
+python-dotenv

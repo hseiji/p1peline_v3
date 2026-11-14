@@ -1,27 +1,42 @@
-from pyspark.sql.functions import col, element_at, current_date, sum, size, when
+from pathlib import Path
+from pyspark.sql.functions import (
+    col, element_at, current_date, sum, count, size, when, explode, trim
+)
 from src.config import PARQUET_PATH
 
+BASE_DIR = Path(__file__).resolve().parent.parent  # p1peline_v3/
+REGION_POP_PATH = str(BASE_DIR / "data/processed/region_population")
 
 def transform_with_spark(spark, raw_path):
 
-    # Read raw JSON
-    df = spark.read.json(raw_path)
+    # Read raw JSON (the file is a single JSON document, not one record per line)
+    raw = spark.read.option("multiLine", True).json(raw_path)
+
+    # The countries live in data.objects, so turn that array into one row per country
+    df = raw.select(explode(col("data.objects")).alias("c"))
 
     # Normalize and clean data
     transformed_df = (
         df.select(
-            col("cca3").alias("country_code"),
-            col("name.common").alias("country_name"),
-            col("region"),
+            col("c.codes.alpha_3").alias("country_code"),
+            col("c.names.common").alias("country_name"),
+            col("c.region").alias("region"),
             # Safe extraction of first capital
-            when(size(col("capital")) > 0, element_at(col("capital"), 1)).otherwise(None).alias("capital"),
-            col("population")
+            when(size(col("c.capitals")) > 0, element_at(col("c.capitals"), 1))
+                .otherwise(None).alias("capital"),
+            col("c.population").alias("population"),
         )
         .withColumn("ingestion_date", current_date())
     )
 
-    # Drop invalid rows
-    transformed_df = transformed_df.dropna(subset=["country_code"])
+    # Drop invalid rows (null OR empty-string codes)
+    transformed_df = transformed_df.filter(
+        col("country_code").isNotNull() & (trim(col("country_code")) != "")
+    ).cache()  # Cache for performance if used multiple times
+
+    # Total count of countries
+    total = transformed_df.count()
+    print(f"Total countries: {total}")
 
     # -------------------------
     # Write cleaned dataset
@@ -45,6 +60,6 @@ def transform_with_spark(spark, raw_path):
 
     region_population.write \
         .mode("overwrite") \
-        .parquet("data/processed/region_population")
+        .parquet(REGION_POP_PATH)
 
     return transformed_df, region_population
